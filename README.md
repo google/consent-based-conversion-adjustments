@@ -15,14 +15,14 @@ customers that gave consent. By doing this, advertisers have the possibility to
 feed back up to 100% of the factual conversion values back into Smart Bidding.
 
 ## Solution description
-go/cocoa-slides
-We take the following approach: For all consenting and non-consenting customers
-that converted on a given day, the advertiser has access to first-party data
-that describes the customers. Examples could be the adgroup-title that a
-conversion is attributed to, the device type used, or demographic information.
-Based on this information, a feature space can be created that describes each
-consenting and non-consenting customer. Importantly, this feature space has to
-be the same for all customers.
+
+[go/cocoa-slides](http://go/cocoa-slides) We take the following approach: For
+all consenting and non-consenting customers that converted on a given day, the
+advertiser has access to first-party data that describes the customers. Examples
+could be the adgroup-title that a conversion is attributed to, the device type
+used, or demographic information. Based on this information, a feature space can
+be created that describes each consenting and non-consenting customer.
+Importantly, this feature space has to be the same for all customers.
 
 Given this feature space, we can create a distance-graph for all *consenting*
 customers in our dataset, and find the nearest consenting customers for each
