@@ -15,7 +15,7 @@
 
 # TODO(cahlheim): check scann package
 import logging
-from typing import Any, Callable, List, Sequence, Tuple, Union
+from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -228,8 +228,8 @@ class NearestCustomerMatcher:
   def _get_nearest_neighbors(
       self,
       data_noconsent: pd.DataFrame,
-      radius: float = None,
-      number_nearest_neighbors: float = None
+      radius: Optional[float] = None,
+      number_nearest_neighbors: Optional[float] = None
   ) -> Tuple[Sequence[np.ndarray], Sequence[np.ndarray], Sequence[bool]]:
     """Get indices and distances to nearest neighbors.
 
@@ -290,8 +290,8 @@ class NearestCustomerMatcher:
   def get_indices_and_values_to_nearest_neighbors(
       self,
       data_noconsent: pd.DataFrame,
-      radius: float = None,
-      number_nearest_neighbors: float = None
+      radius: Optional[float] = None,
+      number_nearest_neighbors: Optional[float] = None
   ) -> Tuple[Sequence[np.ndarray], Sequence[np.ndarray], Sequence[np.ndarray],
              Sequence[np.ndarray], Sequence[bool]]:
     """Gets indices of nearest neighbours as well as the needed conversions.
@@ -335,8 +335,8 @@ class NearestCustomerMatcher:
   def calculate_adjusted_conversions(
       self,
       data_noconsent: pd.DataFrame,
-      radius: float = None,
-      number_nearest_neighbors: float = None) -> pd.DataFrame:
+      radius: Optional[float] = None,
+      number_nearest_neighbors: Optional[float] = None) -> pd.DataFrame:
     """Calculates adjusted conversions for identified nearest neighbors.
 
     Finds nearest neighbors based on radius or number_nearest_neighbors for each
