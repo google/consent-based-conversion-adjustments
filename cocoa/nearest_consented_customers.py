@@ -13,7 +13,6 @@
 # limitations under the License.
 """Module to re-distribute conversion-values of non-consenting customers."""
 
-# TODO(cahlheim): check scann package
 import logging
 from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 
@@ -61,7 +60,7 @@ class NearestCustomerMatcher:
       neighbor: sklearn NearestNeighbor object.
 
     Raises:
-      ValueError if the conversion values contain NaNs or Nones, or if
+      ValueError: if the conversion values contain NaNs or Nones, or if
         conversion values < 0.
     """
     # TODO() Test behaviour under different distance metrics.
@@ -207,7 +206,7 @@ class NearestCustomerMatcher:
         >>> array([False,  True,  True])
 
     Raises:
-      ValueError if the actual number of nearest neighbors is not
+      ValueError: if the actual number of nearest neighbors is not
         `number_nearest_neighbors`.
     """
     if number_nearest_neighbors < 1:
@@ -253,7 +252,7 @@ class NearestCustomerMatcher:
         had at least one neighbor or not.
 
     Raises:
-      ValueError if not exactly one of radius or number_nearest_neighbors are
+      ValueError: if not exactly one of radius or number_nearest_neighbors are
         provided.
     """
     has_radius = radius is not None
@@ -275,10 +274,11 @@ class NearestCustomerMatcher:
       data_noconsent: Data of non-consenting customers.
 
     Raises:
-      ValueError if columns of consenting and non-consenting data don't match,
+      ValueError: if columns of consenting and non-consenting data don't match,
         the conversion values contain NaNs/Nones or if conversion values <0.
     """
-    if not all(self._columns_consent == data_noconsent.columns):
+    if not all(self._columns_consent == data_noconsent.columns) or (len(
+        self._columns_consent) != len(data_noconsent.columns)):
       raise ValueError(
           "Consented and non-consented data must have same columns.")
     for data in (data_noconsent, self._data_consent):
@@ -313,7 +313,6 @@ class NearestCustomerMatcher:
       has_neighbor: Whether or not a given non-consenting customer had a
         nearest neighbor.
     """
-
     data_noconsent = data_noconsent.drop(self._id_columns, axis=1)
     self._assert_all_columns_match_and_conversions_are_valid(data_noconsent)
     neighbors_index, neighbors_distance, has_neighbor = (
@@ -552,3 +551,60 @@ def _set_adgroup_by_level_to_zero(data: pd.DataFrame,
                                     level=next_level,
                                     recursive=True)
   return data
+
+
+def get_adjustments_and_summary_calculations(
+    matcher: NearestCustomerMatcher,
+    data_noconsent: pd.DataFrame,
+    number_nearest_neighbors: Optional[float] = None,
+    radius: Optional[float] = None,
+    percentile: Optional[float] = None,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+  """Calculates adjusted conversions for consenting customers.
+
+  Args:
+    matcher: Matcher object which has been fit to all of data_consent. It
+      provides the functionality to get the nearest neighbors for a given
+      non-consenting customer.
+    data_noconsent: Dataframe of non-consenting customers. Needs to have the
+      same columns as data_consent to calculate similarity between data points.
+    number_nearest_neighbors: Number of consenting customers to chose to match
+      to. If float, is taken as proportion of all customers.
+    radius: Radius to find matching consenting customers.
+    percentile: Percentile of matched non-consenting customers based on which
+      radius is set.
+
+  Returns:
+  A two-tuple with:
+      - adjusted conversion values for new and old customers.
+      - summary statistics on matched conversions (% of counts,% of conversion
+      value).
+
+  Raises:
+    ValueError: if not exactly one of number_nearest_neighbors, radius,
+      or percentile is provided.
+    ValueError: if the provided percentile is not within the range of 0-1.
+  """
+  has_number_nearest_neighbors = number_nearest_neighbors is not None
+  has_radius = radius is not None
+  has_percentile = percentile is not None
+
+  if (has_number_nearest_neighbors + has_radius + has_percentile) != 1:
+    raise ValueError("Exactly one of number_nearest_neighbors, radius,",
+                     " or percentile has to be specified.")
+
+  if has_percentile and not 0 < percentile <= 1:
+    raise ValueError("The percentile has to be a value between 0 and 1.")
+
+  if number_nearest_neighbors or radius:
+    data_adjusted = matcher.calculate_adjusted_conversions(
+        data_noconsent=data_noconsent,
+        number_nearest_neighbors=number_nearest_neighbors,
+        radius=radius)
+  elif percentile:
+    matcher.calculate_adjusted_conversions(
+        data_noconsent=data_noconsent, number_nearest_neighbors=1)
+    radius = matcher.min_radius_by_percentile(percentile=percentile)
+    data_adjusted = matcher.calculate_adjusted_conversions(
+        data_noconsent=data_noconsent, radius=radius)
+  return data_adjusted, matcher.summary_statistics_matched_conversions

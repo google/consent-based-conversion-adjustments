@@ -14,12 +14,12 @@
 
 """Tests for nearest_consented_customers package."""
 
+from absl.testing import absltest
+from absl.testing import parameterized
 import numpy as np
 
 from consent_based_conversion_adjustments.cocoa import nearest_consented_customers
 from consent_based_conversion_adjustments.cocoa import testing_constants
-from absl.testing import absltest
-from absl.testing import parameterized
 
 CONVERSION_COLUMN = testing_constants.CONVERSION_COLUMN
 ID_COLUMNS = testing_constants.ID_COLUMNS
@@ -130,6 +130,73 @@ class NearestCustomerTest(parameterized.TestCase):
         n_examples=1, level='1')
 
     self.assertLess(0, permuted_dist.mean())
+
+  def test_raises_value_error_if_number_nearest_neighbors_and_radius(self):
+    with self.assertRaises(ValueError):
+      nearest_consented_customers.get_adjustments_and_summary_calculations(
+          matcher=self.matcher,
+          data_noconsent=DATA_NOCONSENT.drop(columns=[CONVERSION_COLUMN]),
+          number_nearest_neighbors=1,
+          radius=1)
+
+  def test_adjusted_conversions_larger_zero(self):
+    adjusted_conversions, _ = (
+        nearest_consented_customers.get_adjustments_and_summary_calculations(
+            matcher=self.matcher,
+            data_noconsent=DATA_NOCONSENT,
+            number_nearest_neighbors=3,
+        ))
+
+    self.assertGreater(adjusted_conversions['adjusted_conversion'].sum(), 0)
+
+  @parameterized.named_parameters(
+      {
+          'testcase_name': 'percentile.9',
+          'percentile': .9,
+      }, {
+          'testcase_name': 'percentile.5',
+          'percentile': .5,
+      }, {
+          'testcase_name': 'percentile.1',
+          'percentile': .1,
+      })
+  def test_percentage_matched_conversions_matches_target_percentage(
+      self, percentile):
+    _, summary_statistics_matched_conversions = (
+        nearest_consented_customers.get_adjustments_and_summary_calculations(
+            matcher=self.matcher,
+            data_noconsent=DATA_NOCONSENT,
+            percentile=percentile,
+        ))
+
+    self.assertGreaterEqual(
+        summary_statistics_matched_conversions['percentage_matched_conversions']
+        .values, percentile)
+
+  @parameterized.named_parameters(
+      {
+          'testcase_name': 'percentile>1',
+          'percentile': 1.1,
+      }, {
+          'testcase_name': 'percentile<0',
+          'percentile': -1,
+      })
+  def test_raises_value_error_for_invalid_percentile(self, percentile):
+    with self.assertRaises(ValueError):
+      nearest_consented_customers.get_adjustments_and_summary_calculations(
+          matcher=self.matcher,
+          data_noconsent=DATA_NOCONSENT,
+          percentile=percentile,
+      )
+
+  def test_length_adjusted_conversions_equals_length_data_consent(self):
+    adjusted_conversions, _ = (
+        nearest_consented_customers.get_adjustments_and_summary_calculations(
+            matcher=self.matcher,
+            data_noconsent=DATA_NOCONSENT,
+            number_nearest_neighbors=3))
+
+    self.assertEqual(len(adjusted_conversions), len(DATA_CONSENT))
 
   # TODO() Add test to assert expected outcome is produced.
 
