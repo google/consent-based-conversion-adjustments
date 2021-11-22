@@ -20,23 +20,20 @@ import pandas as pd
 CONVERSION_COLUMN = 'conversion_column'
 ID_COLUMNS = ['id_column']
 
-adgroups = ['1_1', '2_2', '1_1']
+product_levels = ['1_1', '2_2', '1_1']
 DATA_CONSENT = pd.concat([
     pd.DataFrame(
         np.array([[1, 2, 3, 0], [0, 5, 6, 0], [1, 8, 9, 0]]),
         columns=['a', 'b', CONVERSION_COLUMN] + ID_COLUMNS)
 ] * 10)
 DATA_CONSENT.reset_index(inplace=True, drop=True)
-DATA_CONSENT['adgroup_level'] = adgroups * 10
+DATA_CONSENT['product_level'] = product_levels * 10
 DATA_NOCONSENT = pd.concat([
     pd.DataFrame(
         np.array([[4, 5, 6, 0], [7, 8, 9, 0], [10, 11, 12, 0]]),
         columns=['a', 'b', CONVERSION_COLUMN] + ID_COLUMNS)
 ] * 5)
 DATA_NOCONSENT.reset_index(inplace=True, drop=True)
-DATA_NOCONSENT['adgroup_level'] = adgroups * 5
-
-DATA_CONSENT = pd.get_dummies(DATA_CONSENT)
-DATA_NOCONSENT = pd.get_dummies(DATA_NOCONSENT)
+DATA_NOCONSENT['product_level'] = product_levels * 5
 
 METRIC = 'manhattan'

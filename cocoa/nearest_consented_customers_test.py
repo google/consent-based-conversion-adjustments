@@ -125,12 +125,6 @@ class NearestCustomerTest(parameterized.TestCase):
     np.testing.assert_almost_equal(np.sum(weighted_conversions, axis=1),
                                    original_conversions)
 
-  def test_permuted_distances_larger_zero(self):
-    permuted_dist = self.matcher.create_self_permutation_and_return_distances(
-        n_examples=1, level='1')
-
-    self.assertLess(0, permuted_dist.mean())
-
   def test_raises_value_error_if_number_nearest_neighbors_and_radius(self):
     with self.assertRaises(ValueError):
       nearest_consented_customers.get_adjustments_and_summary_calculations(

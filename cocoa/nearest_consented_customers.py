@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Module to re-distribute conversion-values of non-consenting customers."""
+
+"""Module to re-distribute conversion-values of no-consent customers."""
 
 import logging
 from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
@@ -21,7 +22,6 @@ import pandas as pd
 from scipy import sparse
 from scipy import special
 from sklearn import neighbors
-from sklearn.metrics import pairwise
 
 
 class NearestCustomerMatcher:
@@ -32,14 +32,14 @@ class NearestCustomerMatcher:
   conversion values (e.g. value of a purchase) across all customers are
   accessible to SmartBidding.
   The NearestCustomerMatcher finds the most similar customers among the
-  consenting customers to each of the non-consenting customers, and distributes
-  the conversion values of any non-consenting customer across the matches in the
+  consenting customers to each of the no-consent customers, and distributes
+  the conversion values of any no-consent customer across the matches in the
   set of consenting customers, in proportion to their distance.
   Similarity is defined as the distance between customers in their feature-
   space, for instance based on adgroup-levels. Which distance-metric to
   choose is up to the user.
-  The more similar a consenting customer is to a given non-consenting
-  customer, the larger the share of the non-consenting customer's conversion-
+  The more similar a consenting customer is to a given no-consent
+  customer, the larger the share of the no-consent customer's conversion-
   value that will be added to the consenting customer's conversion value.
   """
 
@@ -120,13 +120,6 @@ class NearestCustomerMatcher:
         percentiles=[.25, .5, .75, .9, .95, .99])
 
   @property
-  def get_permuted_distances(self):
-    permuted_distances = pairwise.paired_distances(self._data_examples,
-                                                   self._data_permuted,
-                                                   metric=self._neighbor.metric)
-    return permuted_distances
-
-  @property
   def summary_statistics_matched_conversions(self):
     return pd.DataFrame(
         {
@@ -160,7 +153,7 @@ class NearestCustomerMatcher:
     """Gets neighbors within specified radius.
 
     Args:
-      data_noconsent: Data of non-consenting customers.
+      data_noconsent: Data of no-consent customers.
       radius: Radius within which nearest neighbors are found.
 
     Returns:
@@ -191,7 +184,7 @@ class NearestCustomerMatcher:
     """Gets n nearest neighbors.
 
     Args:
-      data_noconsent: Data of non-consenting customers.
+      data_noconsent: Data of no-consent customers.
       number_nearest_neighbors: Number of neighbors to return. If <1,
         number_nearest_neighbors is calculated as the proportion in the set of
         consenting customers.
@@ -238,7 +231,7 @@ class NearestCustomerMatcher:
     neighbor are removed.
 
     Args:
-      data_noconsent: Data of non-consenting customers.
+      data_noconsent: Data of no-consent customers.
       radius: Radius within which neighbors have to lie.
       number_nearest_neighbors: Defines the number (or proportion) of nearest
         neighbors. If smaller 1, number_nearest_neighbors is calculated as the
@@ -248,7 +241,7 @@ class NearestCustomerMatcher:
       A 3-tuple with:
         Array of indices-arrays of nearest neighbors in data_consent.
         Array of distances-arrays of nearest neigbors in data_consent.
-        Array of booleans indicating whether a given non-consenting customer
+        Array of booleans indicating whether a given no-consent customer
         had at least one neighbor or not.
 
     Raises:
@@ -268,13 +261,13 @@ class NearestCustomerMatcher:
                                            number_nearest_neighbors)
 
   def _assert_all_columns_match_and_conversions_are_valid(self, data_noconsent):
-    """Checks that all consenting and non-consenting data match and are valid.
+    """Checks that all consenting and no-consent data match and are valid.
 
     Args:
-      data_noconsent: Data of non-consenting customers.
+      data_noconsent: Data of no-consent customers.
 
     Raises:
-      ValueError: if columns of consenting and non-consenting data don't match,
+      ValueError: if columns of consenting and no-consent data don't match,
         the conversion values contain NaNs/Nones or if conversion values <0.
     """
     if not all(self._columns_consent == data_noconsent.columns) or (len(
@@ -297,7 +290,7 @@ class NearestCustomerMatcher:
     """Gets indices of nearest neighbours as well as the needed conversions.
 
     Args:
-      data_noconsent: Data of non-consenting customers.
+      data_noconsent: Data of no-consent customers.
       radius: Radius within which neighbors have to lie.
       number_nearest_neighbors: Defines the number (or proportion) of nearest
         neighbors.
@@ -306,11 +299,11 @@ class NearestCustomerMatcher:
       neighbors_data_index: Arrays of indices to the nearest neighbors in the
         consenting-customer data.
       neighbors_distance: Arrays of distances to the nearest neighbors.
-      weighted_conversion_values: Conversion values of non-consenting customers
+      weighted_conversion_values: Conversion values of no-consent customers
         weighted by their distance to each nearest neighbor.
-      weighted_distance: Weighted distances between non-consenting and
+      weighted_distance: Weighted distances between no-consent and
         consenting customers.
-      has_neighbor: Whether or not a given non-consenting customer had a
+      has_neighbor: Whether or not a given no-consent customer had a
         nearest neighbor.
     """
     data_noconsent = data_noconsent.drop(self._id_columns, axis=1)
@@ -342,13 +335,13 @@ class NearestCustomerMatcher:
     entry in data_noconsent. If nearest neighbors are defined via radius,
     entries in data_noconsent without sufficiently close neighbor are ignored.
     Conversion values of consenting customers that are identified as nearest
-    neighbor to a non-consenting customer are adjusted by adding the weighted
-    proportional conversion value of the respective non-consenting customer.
+    neighbor to a no-consent customer are adjusted by adding the weighted
+    proportional conversion value of the respective no-consent customer.
     The weighted conversion value is calculated as the product of the conversion
     value with the softmax over all neighbor-similarities.
 
     Args:
-      data_noconsent: Data for non-consenting customer(s). Needs to be pre-
+      data_noconsent: Data for no-consent customer(s). Needs to be pre-
         processed and have the same columns as data_consent.
       radius: Radius within which neighbors have to lie.
       number_nearest_neighbors: Defines the number (or proportion) of nearest
@@ -375,54 +368,6 @@ class NearestCustomerMatcher:
         weighted_conversion_values, neighbors_data_index, neighbors_distance,
         weighted_distance)
     return self._data_adjusted
-
-  def create_self_permutation_and_return_distances(
-      self,
-      n_examples: int,
-      level: str = "5",
-      recursive: bool = True,
-  ) -> Sequence[float]:
-    """Calculate distance to permuted-self for n samples.
-
-    For n random samples,set the adgroup variables at levels from 'level'
-    onwards to 0 and return the resulting distance to the original datapoint.
-    This serves as indication of the robustness of the nearest-neighbor model.
-
-    Args:
-     n_examples: Number of examples.
-     level: Level of adgroup variables that should be changed.
-     recursive: If True, changes all lower adgroup levels, too.
-
-    Returns:
-      permuted_distances: Array of n_examples distances under permutation.
-    """
-
-    data_examples = self._data_noconsent.sample(n_examples,
-                                                random_state=42).copy()
-    data_examples.drop([self._conversion_column], axis=1, inplace=True)
-
-    adgroup_array = self._data_noconsent.columns[
-        self._data_noconsent.columns.str.startswith("adgroup_level")]
-    level_array = np.array([col.split("_")[3] for col in adgroup_array])
-    if adgroup_array.empty or len(level_array) == 0:
-      raise ValueError(
-          "No adgroup or adgroup-levels could be found.",
-          "Please ensure all adgroup-columns begin with 'adgroup'.")
-    data_permuted = data_examples.copy()
-    data_permuted = _set_adgroup_by_level_to_zero(data_permuted,
-                                                  adgroup_array,
-                                                  level_array,
-                                                  level=level,
-                                                  recursive=recursive)
-    data_permuted.sort_index(inplace=True)
-    data_examples.sort_index(inplace=True)
-
-    permuted_distances = pairwise.paired_distances(data_examples,
-                                                   data_permuted,
-                                                   metric=self._neighbor.metric)
-    self._data_permuted = data_permuted
-    self._data_examples = data_examples
-    return permuted_distances
 
 
 def _calculate_weighted_conversion_values(
@@ -472,12 +417,12 @@ def _distribute_conversion_values(
     neighbors_distance: Sequence[np.ndarray],
     weighted_distance: Sequence[np.ndarray],
 ) -> pd.DataFrame:
-  """Distribute conversion-values of non-consenting over consenting customers.
+  """Distribute conversion-values of no-consent over consenting customers.
 
   Conversion values of consenting customers that are identified as nearest
-  neighbor to a non-consenting customer are adjusted by adding the weighted
-  proportional conversion value of the respective non-consenting customer.
-  Additionally, metrics like average distance to non-consenting customers
+  neighbor to a no-consent customer are adjusted by adding the weighted
+  proportional conversion value of the respective no-consent customer.
+  Additionally, metrics like average distance to no-consent customers
   and total number of added conversions are calculated.
 
   Args:
@@ -485,7 +430,7 @@ def _distribute_conversion_values(
     conversion_column: String indicating the conversion KPI in data_consent.
     non_consent_conversion_values: Array of original conversion values.
     weighted_conversion_values: Array of arrays of weighted conversion_values,
-      based on distance between consenting and non-consenting customers.
+      based on distance between consenting and no-consent customers.
     neighbors_index: Array of arrays of neighbor-indices.
     neighbors_distance: Array of arrays of neighbor-distances.
     weighted_distance: Array of arrays of weighted neighbor-distances.
@@ -519,40 +464,6 @@ def _distribute_conversion_values(
   return data_adjusted
 
 
-def _set_adgroup_by_level_to_zero(data: pd.DataFrame,
-                                  adgroup_array: Sequence[Any],
-                                  level_array: Sequence[str],
-                                  level: str = "5",
-                                  recursive: bool = True) -> pd.DataFrame:
-  """Set dummy-variables for ad-group to zero for given level.
-
-  For each adgroup corresponding to 'level', sets all to 0. Effectively, this
-  removes the adgroup level from the ad-hierarchy.
-
-  Args:
-     data: DataFrame for which adgroup-fields should be permuted.
-     adgroup_array: List of column names of adgroup features in dataframe.
-     level_array: List of levels for each adgroup name. Has to match
-       adgroup_array.
-     level: Level of adgroup variables that should be changed.
-     recursive: If True, changes all lower adgroup levels, too.
-
-  Returns:
-    data_permuted: Dataframe with permuted adgroup-columns.
-  """
-  level_columns = adgroup_array[level_array == level]
-  data.loc[:, level_columns] = 0
-  if recursive:
-    next_level = str(int(level) + 1)
-    if next_level <= max(level_array):
-      _set_adgroup_by_level_to_zero(data=data,
-                                    adgroup_array=adgroup_array,
-                                    level_array=level_array,
-                                    level=next_level,
-                                    recursive=True)
-  return data
-
-
 def get_adjustments_and_summary_calculations(
     matcher: NearestCustomerMatcher,
     data_noconsent: pd.DataFrame,
@@ -565,13 +476,13 @@ def get_adjustments_and_summary_calculations(
   Args:
     matcher: Matcher object which has been fit to all of data_consent. It
       provides the functionality to get the nearest neighbors for a given
-      non-consenting customer.
-    data_noconsent: Dataframe of non-consenting customers. Needs to have the
+      no-consent customer.
+    data_noconsent: Dataframe of no-consent customers. Needs to have the
       same columns as data_consent to calculate similarity between data points.
     number_nearest_neighbors: Number of consenting customers to chose to match
       to. If float, is taken as proportion of all customers.
     radius: Radius to find matching consenting customers.
-    percentile: Percentile of matched non-consenting customers based on which
+    percentile: Percentile of matched no-consent customers based on which
       radius is set.
 
   Returns:
