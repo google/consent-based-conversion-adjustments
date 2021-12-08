@@ -100,7 +100,6 @@ def preprocess_data(data: pd.DataFrame, drop_columns: List[Any],
       data.drop(drop_columns + non_dummy_columns, axis=1, errors="ignore"),
       sparse=True)
   data_dummies.astype(pd.SparseDtype("bool", 0))
-  data_dummies["new_customer"] = data_dummies["new_customer"].astype("bool")
   data_dummies = data_dummies.join(data[non_dummy_columns])
   logging.info("Shape of dummy-coded data is:%d", np.shape(data_dummies))
   return data_dummies
