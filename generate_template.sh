@@ -16,16 +16,24 @@
 echo "Requesting template to be generated..."
 
 python -m pipeline \
-    --runner DataflowRunner \
-    --project "${DEVSHELL_PROJECT_ID}" \
-    --region "${PIPELINE_REGION}" \
-    --temp_location "gs://${PIPELINE_BUCKET}/temp/" \
-    --staging_location "gs://${PIPELINE_BUCKET}/staging/" \
-    --template_location "gs://${PIPELINE_BUCKET}/templates/cocoa-template" \
-    --output_csv_path "gs://${PIPELINE_BUCKET}/output/adjusted-conversions" \
+    --input_path "gs://${PIPELINE_BUCKET}/input/dates.txt" \
+    --output_csv_bucket "${PIPELINE_BUCKET}" \
+    --output_csv_path "output" \
+    --bq_project "${BQ_PROJECT_ID}" \
+    --location "${BIGQUERY_LOCATION}" \
+    --table_consent "${TABLE_CONSENT}" \
+    --table_noconsent "${TABLE_NOCONSENT}" \
+    --date_column "${DATE_COLUMN}" \
     --conversion_column "${CONVERSION_COLUMN}" \
     --id_columns "${ID_COLUMNS}" \
-    --autoscaling_algorithm "THROUGHPUT_BASED" \
+    --drop_columns "${DROP_COLUMNS}" \
+    --non_dummy_columns "${NON_DUMMY_COLUMNS}" \
+    --runner DataflowRunner \
+    --project "${PROJECT_ID}" \
+    --staging_location "gs://${PIPELINE_BUCKET}/staging/" \
+    --temp_location "gs://${PIPELINE_BUCKET}/temp/" \
+    --template_location "gs://${PIPELINE_BUCKET}/templates/cocoa-template" \
+    --region "${PIPELINE_REGION}" \
     --machine_type "n1-highmem-32" \
     --setup_file ./setup.py
 
