@@ -81,10 +81,13 @@ def _fake_load_data_from_bq(table_name: str, *args, **kwargs) -> pd.DataFrame:  
 @dataclasses.dataclass(frozen=True)
 class RuntimeParam:
   value: any
-  is_accessible: bool = True
+  accessible: bool = True
 
   def get(self):
     return self.value
+
+  def is_accessible(self):
+    return self.accessible
 
 
 class PipelineTest(parameterized.TestCase):
@@ -94,25 +97,6 @@ class PipelineTest(parameterized.TestCase):
     super().setUpClass()
     # Replace network calls to BigQuery with a local fake reply
     pipeline._load_data_from_bq = _fake_load_data_from_bq
-
-  @parameterized.named_parameters(
-      dict(
-          testcase_name='_start_date_as_single_entry_list',
-          start_date=RuntimeParam('2021-12-15'),
-          lookback_window=RuntimeParam(1),
-          expected_output=[datetime.date.fromisoformat('2021-12-15')]),
-      dict(
-          testcase_name='_list_with_start_date_and_previous_day',
-          start_date=RuntimeParam('2021-12-15'),
-          lookback_window=RuntimeParam(2),
-          expected_output=[
-              datetime.date.fromisoformat('2021-12-15'),
-              datetime.date.fromisoformat('2021-12-14')
-          ]))
-  def test_get_dates_to_process_returns(self, start_date, lookback_window,
-                                        expected_output):
-    result = pipeline.get_dates_to_process(start_date, lookback_window)
-    self.assertListEqual(result, expected_output)
 
   @parameterized.named_parameters(
       dict(

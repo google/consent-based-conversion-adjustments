@@ -25,7 +25,7 @@ import datetime
 import logging
 import os
 import sys
-from typing import Any, List, Optional, Sequence, Tuple
+from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 
 import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions
@@ -54,6 +54,11 @@ def _parse_known_args(
   """
   parser = argparse.ArgumentParser()
   parser.add_argument(
+      '--input_path',
+      dest='input_path',
+      required=True,
+      help='Path to txt file containing dates for which to run the pipeline.')
+  parser.add_argument(
       '--output_csv_bucket',
       dest='output_csv_bucket',
       required=True,
@@ -64,8 +69,8 @@ def _parse_known_args(
       required=True,
       help='CSV output file location.')
   parser.add_argument(
-      '--project',
-      dest='project',
+      '--bq_project',
+      dest='bq_project',
       required=True,
       help='Google Cloud project containing the BigQuery tables.')
   parser.add_argument(
@@ -123,28 +128,16 @@ class RuntimeOptions(PipelineOptions):
   @classmethod  # classmethod is required here for Beam's PipelineOptions.
   def _add_argparse_args(cls, parser):
     parser.add_value_provider_argument(
-        '--start_date',
-        help='start date of the analysis in ISO format e.g. 2021-01-27.',
-        type=str)
-    parser.add_value_provider_argument(
-        '--lookback_window',
-        help='number of days in the past to process data',
-        default=1,
-        type=int)
-    parser.add_value_provider_argument(
         '--number_nearest_neighbors',
-        help='number of nearest consenting customers to select.',
-        type=int)
+        help='number of nearest consenting customers to select.')
     parser.add_value_provider_argument(
         '--radius',
-        help='radius within which nearest customers should be considered.',
-        type=float)
+        help='radius within which nearest customers should be considered.')
     parser.add_value_provider_argument(
         '--percentile',
-        help='percentage of non-consenting customers that should be matched.',
-        type=float)
+        help='percentage of non-consenting customers that should be matched.')
     parser.add_value_provider_argument(
-        '--metric', help='distance metric.', default='manhattan', type=str)
+        '--metric', help='distance metric.', type=str)
 
 
 def _load_data_from_bq(table_name: str, location: str, project: str,
@@ -235,33 +228,38 @@ class ConversionAdjustments(beam.DoFn):
         self._drop_columns, self._non_dummy_columns)
     matcher = nearest_consented_customers.NearestCustomerMatcher(
         data_consent, self._conversion_column, self._id_columns,
-        self._metric.get())
-    logging.info('Calculation conversion adjustments for date %r', process_date)
+        _get_runtime_val_or_none(self._metric))
+    logging.info('Calculating conversion adjustments for date %r', process_date)
+
     data_adjusted, summary_statistics_matched_conversions = nearest_consented_customers.get_adjustments_and_summary_calculations(
-        matcher, data_noconsent, self._number_nearest_neighbors.get(),
-        self._radius.get(), self._percentile.get())
+        matcher, data_noconsent,
+        _get_runtime_val_or_none(self._number_nearest_neighbors, int),
+        _get_runtime_val_or_none(self._radius, float),
+        _get_runtime_val_or_none(self._percentile, float))
     return [(start_date, data_adjusted, summary_statistics_matched_conversions)]
 
 
-def get_dates_to_process(
-    start_date: RuntimeValueProvider,
-    lookback_window: RuntimeValueProvider) -> Sequence[datetime.date]:
-  """Generates a sequence of dates.
+def _get_runtime_val_or_none(
+    runtime_var: RuntimeValueProvider,
+    apply_type: Callable[[Union[int, float, str]], Union[int, float, str]] = str
+) -> Optional[Union[int, float, str]]:
+  """Gets the runtime value in the correct type.
 
-  Creates a sequence of dates based on the given start date and lookback window.
+  Checks if a runtime value is available. If the value is not None, convert the
+  value to the requested type.
 
   Args:
-    start_date: Starting date for the sequence.
-    lookback_window: Number of days in the past.
+    runtime_var: The runtime value provider.
+    apply_type: A type that may be applied to non-none runtime values.
 
   Returns:
-    A sequence of dates ranging from start_date - lookback_window to the
-    start_date.
+    Typed value if available, otherwise None.
   """
-  return [
-      datetime.date.fromisoformat(start_date.get()) -
-      datetime.timedelta(days=delta) for delta in range(lookback_window.get())
-  ]
+  if runtime_var.is_accessible():
+    runtime_val = runtime_var.get()
+    if runtime_val is not None:
+      return apply_type(runtime_val)
+  return None
 
 
 def write_adjustments_to_gcs(adjustments: Tuple[str, pd.DataFrame,
@@ -330,9 +328,9 @@ def main(argv: Sequence[str], save_main_session: bool = True) -> None:
 
     dates_to_process = (
         p
-        | 'Create collection of dates' >> beam.Create(
-            get_dates_to_process(runtime_options.start_date,
-                                 runtime_options.lookback_window)))
+        | 'Read ISO format date string from input file' >> beam.io.ReadFromText(
+            known_args.input_path)
+        | 'Convert to date type' >> beam.Map(datetime.date.fromisoformat))
 
     adjustments = (
         dates_to_process
@@ -343,7 +341,7 @@ def main(argv: Sequence[str], save_main_session: bool = True) -> None:
                 radius=runtime_options.radius,
                 percentile=runtime_options.percentile,
                 metric=runtime_options.metric,
-                project=known_args.project,
+                project=known_args.bq_project,
                 location=known_args.location,
                 table_consent=known_args.table_consent,
                 table_noconsent=known_args.table_noconsent,
