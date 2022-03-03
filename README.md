@@ -187,3 +187,15 @@ Function. Following instructions show how to set up the Cloud Function:
 
 *   With this in place, the Dataflow pipeline should get triggered whenever new
     data is inserted in your Bigquery tables.
+
+## Contributing
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for details.
+
+## License
+
+Apache 2.0; see [`LICENSE`](LICENSE) for details.
+
+## Disclaimer
+
+This is not an official Google product.
