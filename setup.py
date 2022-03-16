@@ -69,7 +69,7 @@ setuptools.setup(
         'libcst==0.4.1',
         'mock==2.0.0',
         'mypy-extensions==0.4.3',
-        'numpy==1.19.5',
+        'numpy==1.21.0',
         'oauth2client==4.1.3',
         'orjson==3.6.7',
         'packaging==21.3',
