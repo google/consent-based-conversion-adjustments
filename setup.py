@@ -63,7 +63,7 @@ setuptools.setup(
         'grpcio==1.44.0',
         'grpcio-gcp==0.2.2',
         'hdfs==2.6.0',
-        'httplib2==0.17.4',
+        'httplib2==0.19.0',
         'idna==3.3',
         'joblib==1.1.0',
         'libcst==0.4.1',
