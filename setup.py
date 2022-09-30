@@ -65,7 +65,7 @@ setuptools.setup(
         'hdfs==2.6.0',
         'httplib2==0.17.4',
         'idna==3.3',
-        'joblib==1.1.0',
+        'joblib==1.2.0',
         'libcst==0.4.1',
         'mock==2.0.0',
         'mypy-extensions==0.4.3',
