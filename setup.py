@@ -32,7 +32,7 @@ setuptools.setup(
         'apache-beam==2.28.0',
         'avro-python3==1.9.2.1',
         'cachetools==4.2.4',
-        'certifi==2021.10.8',
+        'certifi==2022.12.7',
         'charset-normalizer==2.0.12',
         'crcmod==1.7',
         'dill==0.3.1.1',
