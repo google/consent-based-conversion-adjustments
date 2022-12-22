@@ -373,7 +373,7 @@ class NearestCustomerMatcher:
 def _calculate_weighted_conversion_values(
     conversion_values: Sequence[np.ndarray],
     neighbors_distance: Sequence[np.ndarray],
-) -> Tuple[Sequence[np.float], Sequence[np.float]]:
+) -> Tuple[Sequence[np.ndarray], Sequence[np.ndarray]]:
   """Calculate weighted conversion values as function of distance.
 
   The weighted conversion value is calculated as the product of the conversion
