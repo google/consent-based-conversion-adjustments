@@ -86,7 +86,7 @@ setuptools.setup(
         'python-dateutil==2.8.2',
         'pytz==2021.3',
         'PyYAML==6.0',
-        'requests==2.27.1',
+        'requests==2.31.0',
         'rsa==4.8',
         'scikit-learn==1.0.2',
         'scipy>=1.7',
