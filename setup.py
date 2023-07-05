@@ -60,7 +60,7 @@ setuptools.setup(
         'google-resumable-media==2.2.1',
         'googleapis-common-protos==1.54.0',
         'grpc-google-iam-v1==0.12.3',
-        'grpcio==1.44.0',
+        'grpcio==1.53.0',
         'grpcio-gcp==0.2.2',
         'hdfs==2.6.0',
         'httplib2==0.17.4',
