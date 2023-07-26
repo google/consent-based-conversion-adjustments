@@ -39,7 +39,7 @@ setuptools.setup(
         'docopt==0.6.2',
         'fastavro==1.4.9',
         'fasteners==0.17.3',
-        'future==0.18.2',
+        'future==0.18.3',
         'google-api-core==1.31.5',
         'google-apitools==0.5.31',
         'google-auth==1.35.0',
