@@ -95,7 +95,7 @@ setuptools.setup(
         'threadpoolctl==3.1.0',
         'typing-extensions==3.7.4.3',
         'typing-inspect==0.7.1',
-        'urllib3==1.26.8',
+        'urllib3==1.26.17',
     ],
     classifiers=[
         'Programming Language :: Python :: 3',
