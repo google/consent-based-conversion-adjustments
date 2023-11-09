@@ -77,7 +77,7 @@ setuptools.setup(
         'pbr==5.8.1',
         'proto-plus==1.20.3',
         'protobuf==3.19.4',
-        'pyarrow==2.0.0',
+        'pyarrow==14.0.1',
         'pyasn1==0.4.8',
         'pyasn1-modules==0.2.8',
         'pydot==1.4.2',
