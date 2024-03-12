@@ -71,7 +71,7 @@ setuptools.setup(
         'mypy-extensions==0.4.3',
         'numpy==1.19.5',
         'oauth2client==4.1.3',
-        'orjson==3.6.7',
+        'orjson==3.9.15',
         'packaging==21.3',
         'pandas>=1.3',
         'pbr==5.8.1',
