@@ -81,7 +81,7 @@ setuptools.setup(
         'pyasn1==0.4.8',
         'pyasn1-modules==0.2.8',
         'pydot==1.4.2',
-        'pymongo==3.12.3',
+        'pymongo==4.6.3',
         'pyparsing==2.4.7',
         'python-dateutil==2.8.2',
         'pytz==2021.3',
