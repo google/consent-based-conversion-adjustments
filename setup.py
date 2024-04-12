@@ -64,7 +64,7 @@ setuptools.setup(
         'grpcio-gcp==0.2.2',
         'hdfs==2.6.0',
         'httplib2==0.17.4',
-        'idna==3.3',
+        'idna==3.7',
         'joblib==1.1.0',
         'libcst==0.4.1',
         'mock==2.0.0',
