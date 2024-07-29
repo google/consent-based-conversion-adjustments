@@ -67,9 +67,12 @@ class NearestCustomerMatcher:
     self._neighbor = neighbor(metric=metric, algorithm="auto")
     self._columns_consent = data_consent.drop(id_columns, axis=1).columns
     self._data_consent = data_consent[id_columns + [conversion_column]]
-    features_consent = data_consent.drop(id_columns + [conversion_column],
-                                         axis=1).astype(np.float16).values
-    self._features_consent = sparse.csr_matrix(features_consent)
+    features_consent = data_consent.drop(
+        id_columns + [conversion_column], axis=1
+    ).values.astype(np.float64)
+    self._features_consent = sparse.csr_matrix(features_consent).astype(
+        np.float16
+    )
     self._conversion_column = conversion_column
     self._consent_id = data_consent[id_columns]
     self._id_columns = id_columns
