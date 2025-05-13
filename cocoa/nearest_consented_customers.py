@@ -71,7 +71,7 @@ class NearestCustomerMatcher:
         id_columns + [conversion_column], axis=1
     ).values.astype(np.float64)
     self._features_consent = sparse.csr_matrix(features_consent).astype(
-        np.float16
+        np.float32
     )
     self._conversion_column = conversion_column
     self._consent_id = data_consent[id_columns]
